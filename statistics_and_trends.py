@@ -17,33 +17,83 @@ import seaborn as sns
 
 def plot_relational_plot(df):
     fig, ax = plt.subplots()
+    countries = ["United Kingdom", "United States", "China", "India"]
+    df_plot = df[df["Country Name"].isin(countries)]
+
+    df_melt = df_plot.melt(
+        id_vars="Country Name",
+        var_name="Year",
+        value_name="CO2"
+    )
+
+    df_melt["Year"] = df_melt["Year"].astype(int)
+
+    sns.lineplot(data=df_melt,
+                 x="Year",
+                 y="CO2",
+                 hue="Country Name",
+                 ax=ax)
+
+    ax.set_title("CO2 Emissions Over Time")
     plt.savefig('relational_plot.png')
     return
 
 
 def plot_categorical_plot(df):
     fig, ax = plt.subplots()
+    countries = ["United Kingdom", "United States", "China", "India"]
+    df_plot = df[df["Country Name"].isin(countries)]
+
+    averages = df_plot.set_index("Country Name").mean(axis=1)
+
+    sns.barplot(x=averages.index,
+                y=averages.values,
+                ax=ax)
+
+    ax.set_title("Average CO2 Emissions by Country")
+    plt.xticks(rotation=30)
     plt.savefig('categorical_plot.png')
     return
 
 
 def plot_statistical_plot(df):
     fig, ax = plt.subplots()
+
+    countries = ["United Kingdom", "United States", "China", "India"]
+    df_plot = df[df["Country Name"].isin(countries)]
+
+    df_melt = df_plot.melt(
+        id_vars="Country Name",
+        var_name="Year",
+        value_name="CO2"
+    )
+
+    sns.boxplot(data=df_melt,
+                x="Country Name",
+                y="CO2",
+                ax=ax)
+
+    ax.set_title("Distribution of CO2 Emissions by Country")
     plt.savefig('statistical_plot.png')
     return
 
 
 def statistical_analysis(df, col: str):
-    mean =
-    stddev =
-    skew =
-    excess_kurtosis =
+    mean = df[col].mean()
+    stddev = df[col].std()
+    skew = ss.skew(df[col].dropna())
+    excess_kurtosis = ss.kurtosis(df[col].dropna())
     return mean, stddev, skew, excess_kurtosis
 
 
 def preprocessing(df):
-    # You should preprocess your data in this function and
-    # make use of quick features such as 'describe', 'head/tail' and 'corr'.
+    print(df.head())
+    print(df.describe())
+
+    df = df.dropna(how="all")
+
+    for col in df.columns[1:]:
+        df[col] = pd.to_numeric(df[col], errors="coerce")
     return df
 
 
@@ -53,16 +103,29 @@ def writing(moments, col):
           f'Standard Deviation = {moments[1]:.2f}, '
           f'Skewness = {moments[2]:.2f}, and '
           f'Excess Kurtosis = {moments[3]:.2f}.')
-    # Delete the following options as appropriate for your data.
-    # Not skewed and mesokurtic can be defined with asymmetries <-2 or >2.
-    print('The data was right/left/not skewed and platy/meso/leptokurtic.')
+
+    if moments[2] > 0.5:
+        skew_desc = "right skewed"
+    elif moments[2] < -0.5:
+        skew_desc = "left skewed"
+    else:
+        skew_desc = "not skewed"
+        
+    if moments[3] > 2:
+        kurt_desc = "leptokurtic"
+    elif moments[3] < -2:
+        kurt_desc = "platykurtic"
+    else:
+        kurt_desc = "mesokurtic"
+    
+    print(f'The data was {skew_desc} and {kurt_desc}.')
     return
 
 
 def main():
     df = pd.read_csv('data.csv')
     df = preprocessing(df)
-    col = '<your chosen column for analysis>'
+    col = '2018'
     plot_relational_plot(df)
     plot_statistical_plot(df)
     plot_categorical_plot(df)
